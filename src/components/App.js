@@ -9,6 +9,12 @@ import api from "../utils/api.js";
 import EditProfilePopup from "./EditProfilePopup.js";
 import EditAvatarPopup from "./EditAvatarPopup.js";
 import AddPlacePopup from "./AddPlacePopup.js";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import Login from "./Login.js";
+import Register from "./Register.js";
+import * as auth from "../utils/auth.js";
+import ProtectedRoute from "./ProtectedRoute.js";
+import InfoTooltip from "./InfoToolTip.js";
 
 export default function App() {
     const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] =
@@ -20,12 +26,19 @@ export default function App() {
     const [currentUser, setCurrentUser] = React.useState({});
     const [cards, setCards] = React.useState([]);
     const [isLoading, setIsLoading] = React.useState(false);
+    const [loggedIn, setLoggedIn] = React.useState(false);
+    const [tooltipImage, setTooltipImage] = React.useState("");
+    const [tooltipTitle, setTooltipTitle] = React.useState("");
+    const [isTooltipPopupOpen, setIsTooltipPopupOpen] = React.useState(false);
+
+    const navigate = useNavigate();
 
     function closeAllPopups() {
         setIsEditProfilePopupOpen(false);
         setIsEditAvatarPopupOpen(false);
         setIsAddPlacePopupOpen(false);
         setSelectedCard(null);
+        setIsTooltipPopupOpen(false);
     }
 
     React.useEffect(() => {
@@ -91,19 +104,53 @@ export default function App() {
             .finally(() => setIsLoading(false));
     }
 
+    function handleOnLogin(email, password) {
+        auth.authorize(password, email)
+            .then((res) => {
+                localStorage.setItem("jwt", res.token);
+                setLoggedIn(true);
+                navigate("/");
+            })
+            .catch((err) => console.log(`Ошибка: ${err}`));
+    }
+
+    function handleOnRegister(email, password) {
+        auth.register(password, email)
+            .then((res) => {
+                navigate("/signin");
+            })
+            .catch((err) => console.log(`Ошибка: ${err}`));
+    }
+
     return (
         <CurrentUserContext.Provider value={currentUser}>
             <div className="body">
                 <div className="page">
                     <Header />
-                    <Main
-                        onEditAvatar={setIsEditAvatarPopupOpen}
-                        onEditProfile={setIsEditProfilePopupOpen}
-                        onAddPlace={setIsAddPlacePopupOpen}
-                        onCardClick={setSelectedCard}
-                        onCardLike={handleCardLike}
-                        onCardDelete={handleCardDelete}
-                        cards={cards}
+                    <Routes>
+                        <Route
+                            path="/signin"
+                            element={<Login onLogin={handleOnLogin} />}
+                        />
+                        <Route
+                            path="/signup"
+                            element={<Register onRegister={handleOnRegister} />}
+                        />
+                    </Routes>
+                    <Route
+                        path="/"
+                        element={
+                            <ProtectedRoute
+                                onEditAvatar={setIsEditAvatarPopupOpen}
+                                onEditProfile={setIsEditProfilePopupOpen}
+                                onAddPlace={setIsAddPlacePopupOpen}
+                                onCardClick={setSelectedCard}
+                                onCardLike={handleCardLike}
+                                onCardDelete={handleCardDelete}
+                                cards={cards}
+                                loggedIn={loggedIn}
+                            />
+                        }
                     />
                     <Footer />
                     <EditProfilePopup
@@ -125,6 +172,12 @@ export default function App() {
                         isLoading={isLoading}
                     />
                     <ImagePopup card={selectedCard} onClose={closeAllPopups} />
+                    <InfoTooltip
+                        image={tooltipImage}
+                        title={tooltipTitle}
+                        isOpen={isTooltipPopupOpen}
+                        onClose={closeAllPopups}
+                    />
                 </div>
             </div>
         </CurrentUserContext.Provider>
