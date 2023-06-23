@@ -10,10 +10,10 @@ export default function InfoTooltip({ isOpen, onClose, image, title }) {
                     {title}
                 </figcaption>
                 <button
-                    className="popup__close"
                     type="button"
+                    className="popup__close"
                     onClick={onClose}
-                />
+                ></button>
             </div>
         </section>
     );

@@ -12,9 +12,11 @@ import AddPlacePopup from "./AddPlacePopup.js";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Login from "./Login.js";
 import Register from "./Register.js";
-import * as auth from "../utils/auth.js";
+import * as auth from "../utils/auth";
 import ProtectedRoute from "./ProtectedRoute.js";
-import InfoTooltip from "./InfoToolTip.js";
+import InfoTooltip from "./InfoTooltip.js";
+import UnionUnsuccess from "../images/UnionUnsuccess.svg";
+import UnionSuccess from "../images/UnionSuccess.svg";
 
 export default function App() {
     const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] =
@@ -30,7 +32,8 @@ export default function App() {
     const [tooltipImage, setTooltipImage] = React.useState("");
     const [tooltipTitle, setTooltipTitle] = React.useState("");
     const [isTooltipPopupOpen, setIsTooltipPopupOpen] = React.useState(false);
-
+    const [email, setEmail] = React.useState("");
+    
     const navigate = useNavigate();
 
     function closeAllPopups() {
@@ -42,14 +45,33 @@ export default function App() {
     }
 
     React.useEffect(() => {
-        Promise.all([api.getUserInfoApi(), api.getInitialCardsApi()])
-            .then(([userInfo, cardData]) => {
-                setCurrentUser(userInfo);
-                setCards(cardData);
-            })
-            .catch((err) => {
-                console.log(`Ошибка: ${err}`);
-            });
+        if (loggedIn === true) {
+            Promise.all([api.getUserInfoApi(), api.getInitialCardsApi()])
+                .then(([userInfo, cardData]) => {
+                    setCurrentUser(userInfo);
+                    setCards(cardData);
+                })
+                .catch((err) => {
+                    console.log(`Ошибка: ${err}`);
+                });
+        }
+    }, [loggedIn]);
+
+    React.useEffect(() => {
+        if (localStorage.getItem("jwt")) {
+            const jwt = localStorage.getItem("jwt");
+            auth.getContent(jwt)
+                .then((res) => {
+                    if (res) {
+                        setLoggedIn(true);
+                        setEmail(res.email);
+                        navigate("/");
+                    }
+                })
+                .catch((err) => {
+                    console.log(`Ошибка: ${err}`);
+                });
+        }
     }, []);
 
     function handleCardLike(card) {
@@ -104,29 +126,60 @@ export default function App() {
             .finally(() => setIsLoading(false));
     }
 
-    function handleOnLogin(email, password) {
+    function handleOnLogin(password, email) {
         auth.authorize(password, email)
             .then((res) => {
                 localStorage.setItem("jwt", res.token);
                 setLoggedIn(true);
+                setEmail(email);
                 navigate("/");
             })
-            .catch((err) => console.log(`Ошибка: ${err}`));
+            .catch((err) => {
+                onError();
+                console.log(`Ошибка: ${err}`);
+            });
     }
 
-    function handleOnRegister(email, password) {
+    function handleOnRegister(password, email) {
         auth.register(password, email)
-            .then((res) => {
+            .then(() => {
                 navigate("/signin");
+                onRegister();
             })
-            .catch((err) => console.log(`Ошибка: ${err}`));
+            .catch((err) => {
+                onError();
+                console.log(`Ошибка: ${err}`);
+            });
+    }
+
+    function onRegister() {
+        setTooltipTitle("Вы успешно зарегистрировались!");
+        setTooltipImage(UnionSuccess);
+        setIsTooltipPopupOpen(true);
+    }
+
+    function onError() {
+        setTooltipTitle("Что-то пошло не так! Попробуйте еще раз.");
+        setTooltipImage(UnionUnsuccess);
+        setIsTooltipPopupOpen(true);
+    }
+
+    function signOut() {
+        localStorage.removeItem("jwt");
+        setLoggedIn(false);
+        setEmail("");
+        navigate("./signin");
     }
 
     return (
         <CurrentUserContext.Provider value={currentUser}>
             <div className="body">
                 <div className="page">
-                    <Header />
+                    <Header
+                        loggedIn={loggedIn}
+                        email={email}
+                        signOut={signOut}
+                    />
                     <Routes>
                         <Route
                             path="/signin"
@@ -136,23 +189,34 @@ export default function App() {
                             path="/signup"
                             element={<Register onRegister={handleOnRegister} />}
                         />
+                        <Route
+                            path="/"
+                            element={
+                                <>
+                                    <ProtectedRoute
+                                        element={Main}
+                                        onEditAvatar={setIsEditAvatarPopupOpen}
+                                        onEditProfile={
+                                            setIsEditProfilePopupOpen
+                                        }
+                                        onAddPlace={setIsAddPlacePopupOpen}
+                                        onCardClick={setSelectedCard}
+                                        onCardLike={handleCardLike}
+                                        onCardDelete={handleCardDelete}
+                                        cards={cards}
+                                        loggedIn={loggedIn}
+                                    />
+                                    <Footer />
+                                </>
+                            }
+                        />
+                        <Route
+                            path="*"
+                            element={
+                                <Navigate to={loggedIn ? "/" : "/signin"} />
+                            }
+                        />
                     </Routes>
-                    <Route
-                        path="/"
-                        element={
-                            <ProtectedRoute
-                                onEditAvatar={setIsEditAvatarPopupOpen}
-                                onEditProfile={setIsEditProfilePopupOpen}
-                                onAddPlace={setIsAddPlacePopupOpen}
-                                onCardClick={setSelectedCard}
-                                onCardLike={handleCardLike}
-                                onCardDelete={handleCardDelete}
-                                cards={cards}
-                                loggedIn={loggedIn}
-                            />
-                        }
-                    />
-                    <Footer />
                     <EditProfilePopup
                         isOpen={isEditProfilePopupOpen}
                         onClose={closeAllPopups}

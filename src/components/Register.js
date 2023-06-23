@@ -1,6 +1,7 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
-export default function Login(onLogin) {
+export default function Login({onRegister}) {
     const [email, setEmail] = React.useState("");
     const [password, setPassword] = React.useState("");
 
@@ -14,7 +15,7 @@ export default function Login(onLogin) {
 
     function handleSubmit(e) {
         e.preventDefault();
-        onLogin(password, email);
+        onRegister(email, password);
     }
 
     return (
@@ -40,6 +41,9 @@ export default function Login(onLogin) {
                 <button className="auth__button" type="submit">
                     Зарегистрироваться
                 </button>
+                <Link className="auth__link" to="signin">
+                    Уже зарегистрированы? Войти
+                </Link>
             </form>
         </div>
     );

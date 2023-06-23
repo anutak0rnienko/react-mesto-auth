@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Login(onLogin) {
+export default function Login({onLogin}) {
     const [email, setEmail] = React.useState("");
     const [password, setPassword] = React.useState("");
 
@@ -40,9 +40,6 @@ export default function Login(onLogin) {
                 <button className="auth__button" type="submit">
                     Войти
                 </button>
-                {/* <Link className="auth__link" to="">
-                    Уже зарегистрированы? Войти
-                </Link> */}
             </form>
         </div>
     );
