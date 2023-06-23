@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-export default function Login({onRegister}) {
+export default function Login({ onRegister }) {
     const [email, setEmail] = React.useState("");
     const [password, setPassword] = React.useState("");
 
@@ -21,7 +21,11 @@ export default function Login({onRegister}) {
     return (
         <div className="auth">
             <h2 className="auth__title">Регистрация</h2>
-            <form name="register" className="auth__form" onSubmit={handleSubmit}>
+            <form
+                name="register"
+                className="auth__form"
+                onSubmit={handleSubmit}
+            >
                 <input
                     className="auth__input auth__input_email"
                     name="email"
@@ -31,6 +35,7 @@ export default function Login({onRegister}) {
                     value={email || ""}
                 />
                 <input
+                    type="password"
                     className="auth__input auth__input_password"
                     name="password"
                     placeholder="Пароль"

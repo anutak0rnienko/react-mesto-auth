@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Login({onLogin}) {
+export default function Login({ onLogin }) {
     const [email, setEmail] = React.useState("");
     const [password, setPassword] = React.useState("");
 
@@ -30,6 +30,7 @@ export default function Login({onLogin}) {
                     value={email || ""}
                 />
                 <input
+                    type="password"
                     className="auth__input auth__input_password"
                     name="password"
                     placeholder="Пароль"
